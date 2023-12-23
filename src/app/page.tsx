@@ -32,24 +32,24 @@ export default function Home() {
         <CardContent>
           <div className="grid grid-cols-3 gap-5">
             <Button
+              variant="outline"
               onClick={() => setSelected(0)}
-              className={`h-16 w-20 ${
-                selected === 0 ? "bg-white" : "bg-gray-600"
-              }`}
+              className={`h-20 w-20 ${selected === 0 && "bg-white"}`}
             >
-              <MetronomeIcon size={25} />
+              <MetronomeIcon
+                size={40}
+                fill={`${selected === 0 ? "#000" : "#aaa"}`}
+              />
             </Button>
             <Button
+              variant="outline"
               onClick={() => setSelected(1)}
-              className={`h-16 w-20 ${
-                selected === 1 ? "bg-white" : "bg-gray-600"
-              }`}
+              className={`h-20 w-20 ${selected === 1 && "bg-white"}`}
             ></Button>
             <Button
+              variant="outline"
               onClick={() => setSelected(2)}
-              className={`h-16 w-20 ${
-                selected === 2 ? "bg-white" : "bg-gray-600"
-              }`}
+              className={`h-20 w-20 ${selected === 2 && "bg-white"}`}
             ></Button>
           </div>
         </CardContent>

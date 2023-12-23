@@ -1,6 +1,6 @@
-const MetronomeIcon = ({ size }: { size: number }) => (
+const MetronomeIcon = ({ size, fill }: { size: number; fill?: string }) => (
   <svg
-    fill="#000000"
+    fill={fill}
     height={`${size}px`}
     width={`${size}px`}
     viewBox="0 0 314 314"

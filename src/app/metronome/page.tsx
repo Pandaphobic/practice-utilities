@@ -24,6 +24,7 @@ import {
   StopIcon,
   ArrowLeftIcon,
   ChevronUpIcon,
+  ChevronDownIcon,
 } from "@radix-ui/react-icons";
 // Metronome
 import { Metronome } from "@/lib/metronome";
@@ -121,40 +122,41 @@ export default function MetronomePage() {
 
   return (
     <div className="flex flex-col items-center justify-between">
-      <Card className="max-w-[600px] w-full">
+      <Card className=" w-full">
         <CardHeader className="pb-0">
           <CardTitle className="text-2xl">Metronome</CardTitle>
           <CardDescription className="grid grid-cols-2 text-sm">
             Set Time Signature, BMP and Notes.
           </CardDescription>
         </CardHeader>
-        <CardContent className="pt-0 mt-0">
-          <div className={`flex items-center justify-between p-10`}>
+        <CardContent className="py-0 my-2">
+          <div className={`flex items-center justify-between px-4 py-4`}>
             {notes.map((note, i) => (
               <div className="text-center p-1" key={i}>
                 <Button
+                  variant={"outline"}
                   className="p-1 h-6 mb-2"
                   onClick={() => incrementNote(i)}
                 >
                   <ChevronUpIcon />
                 </Button>
-
                 <div
                   key={i + 1}
-                  className={`h-14 w-14 rounded-xl ${
-                    i + 1 === count ? "bg-white" : "bg-slate-900"
+                  className={`h-14 w-14 rounded-xl border ${
+                    i + 1 === count ? "bg-white" : ""
                   } ${i + 1 === count ? "text-black" : "text-white"}`}
                 >
                   <p className="text-center justify-center flex flex-col h-full w-full">
                     {note[1]}
                   </p>
-                  <Button
-                    className="p-1 h-6 mt-2"
-                    onClick={() => decrementNote(i)}
-                  >
-                    <ChevronUpIcon className="transform rotate-180" />
-                  </Button>
                 </div>
+                <Button
+                  variant={"outline"}
+                  className="p-1 h-6 mt-2"
+                  onClick={() => decrementNote(i)}
+                >
+                  <ChevronDownIcon />
+                </Button>
               </div>
             ))}
           </div>
