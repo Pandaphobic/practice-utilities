@@ -54,7 +54,11 @@ export default function Home() {
           </div>
         </CardContent>
         <CardFooter className="flex justify-center">
-          <Button onClick={handleStart} className="float-right w-full">
+          <Button
+            {...(selected !== 0 && { disabled: true })}
+            onClick={handleStart}
+            className="float-right w-full text-md"
+          >
             Start
           </Button>
         </CardFooter>

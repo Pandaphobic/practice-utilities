@@ -18,6 +18,13 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuShortcut,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 // Icons
 import {
   PlayIcon,
@@ -27,7 +34,7 @@ import {
   ChevronDownIcon,
 } from "@radix-ui/react-icons";
 // Metronome
-import { Metronome } from "@/lib/metronome";
+import { Metronome, Note } from "@/lib/metronome";
 import { Label, SelectLabel } from "@radix-ui/react-select";
 import { useRouter } from "next/navigation";
 
@@ -45,12 +52,11 @@ export default function MetronomePage() {
   const [notes, setNotes] = useState(metronome.notes);
   const [playing, setPlaying] = useState(false);
   const [count, setCount] = useState(0);
-  // [volume, note
   const [bpm, setBpm] = useState(140);
 
   useEffect(() => {
     // play status
-    const handlePlayStatusChanged = (playing: boolean) => {
+    const handlePlayStatus = (playing: boolean) => {
       console.log(`Metronome is now ${playing ? "playing" : "stopped"}`);
       setPlaying(playing);
     };
@@ -59,13 +65,12 @@ export default function MetronomePage() {
       console.log(`Count: ${count}`);
       setCount(count);
     };
-
     // Add the event listener to the metronome
-    metronome.on("playStatusChanged", handlePlayStatusChanged);
+    metronome.on("playStatusChanged", handlePlayStatus);
     metronome.on("count", handleCount);
     // Clean up the event listener when the component unmounts
     return () => {
-      metronome.off("playStatusChanged", handlePlayStatusChanged);
+      metronome.off("playStatusChanged", handlePlayStatus);
       metronome.off("count", handleCount);
     };
   }, []);
@@ -87,23 +92,47 @@ export default function MetronomePage() {
   const incrementNote = (i: number) => {
     const nextNote = metronome.notesList.indexOf(notes[i][1]) + 1;
     const newNote = metronome.notesList[nextNote];
-
     updateNote(i, notes[i][0], newNote);
   };
 
   const decrementNote = (i: number) => {
     const nextNote = metronome.notesList.indexOf(notes[i][1]) - 1;
     const newNote = metronome.notesList[nextNote];
-
     updateNote(i, notes[i][0], newNote);
   };
 
   const updateNote = (i: number, volume: number, newNote: string) => {
-    if (metronome.notesList.includes(newNote)) {
+    if (metronome.notesList.includes(newNote) || newNote.includes(".")) {
       const newNotes = [...notes];
       newNotes[i] = [volume, newNote];
       metronome.updateNotes(newNotes);
       setNotes(newNotes);
+      return newNotes;
+    }
+    throw new Error("Note not found");
+  };
+
+  const muteNote = (i: number) => {
+    if (notes[i][1].includes(".")) {
+      console.log("unmute note");
+      try {
+        const newNotes = updateNote(
+          i,
+          notes[i][0],
+          notes[i][1].replace(".", "")
+        );
+        setNotes(newNotes);
+      } catch (e: any) {
+        console.log(e.message);
+      }
+    } else {
+      console.log("mute note", notes[i][1] + ".");
+      try {
+        const newNotes = updateNote(i, notes[i][0], notes[i][1] + ".");
+        setNotes(newNotes);
+      } catch (e: any) {
+        console.log(e.message);
+      }
     }
   };
 
@@ -132,46 +161,59 @@ export default function MetronomePage() {
         <CardContent className="py-0 my-2">
           <div className={`flex items-center justify-between px-4 py-4`}>
             {notes.map((note, i) => (
-              <div className="text-center p-1" key={i}>
-                <Button
-                  variant={"outline"}
-                  className="p-1 h-6 mb-2"
-                  onClick={() => incrementNote(i)}
-                >
-                  <ChevronUpIcon />
-                </Button>
-                <div
-                  key={i + 1}
-                  className={`h-14 w-14 rounded-xl border ${
-                    i + 1 === count ? "bg-white" : ""
-                  } ${i + 1 === count ? "text-black" : "text-white"}`}
-                >
-                  <p className="text-center justify-center flex flex-col h-full w-full">
-                    {note[1]}
-                  </p>
+              <VolumeContextMenu
+                key={i}
+                index={i}
+                note={note}
+                updateNote={updateNote}
+              >
+                <div className="text-center p-1" key={i}>
+                  <Button
+                    variant={"outline"}
+                    className="p-1 h-6 mb-2"
+                    onClick={() => incrementNote(i)}
+                  >
+                    <ChevronUpIcon />
+                  </Button>
+                  <div
+                    key={i + 1}
+                    onClick={() => muteNote(i)}
+                    className={`h-14 w-14 rounded-xl border cursor-pointer ${
+                      i + 1 === count ? "bg-white" : ""
+                    } ${i + 1 === count ? "text-black" : "text-white"}`}
+                  >
+                    <p className="text-center justify-center flex flex-col h-full w-full">
+                      {note[1].includes(".") ? " - " : note[1]}
+                    </p>
+                  </div>
+                  <Button
+                    variant={"outline"}
+                    className="p-1 h-6 mt-2"
+                    onClick={() => decrementNote(i)}
+                  >
+                    <ChevronDownIcon />
+                  </Button>
                 </div>
-                <Button
-                  variant={"outline"}
-                  className="p-1 h-6 mt-2"
-                  onClick={() => decrementNote(i)}
-                >
-                  <ChevronDownIcon />
-                </Button>
-              </div>
+              </VolumeContextMenu>
             ))}
           </div>
         </CardContent>
-        <CardFooter className="flex flex-row content-center justify-center  pt-5">
+      </Card>
+      <Card className="mt-4 w-full">
+        <CardFooter className="flex flex-row content-center justify-center p-5">
           <div className="m-auto">
             <Button
               variant={"outline"}
-              className="size-12 justify-center"
+              className="h-14 w-14"
               onClick={() => router.push("/")}
             >
               <ArrowLeftIcon />
             </Button>
           </div>
-          <div className="m-auto">
+          <div className="m-auto flex-row">
+            <div>
+              <p className="text-sm">Time Sig.</p>
+            </div>
             <Select
               onValueChange={handleTimeSignatureChange}
               value={timeSignature}
@@ -201,6 +243,7 @@ export default function MetronomePage() {
           </div>
 
           <div className="m-auto">
+            <p className="text-sm">BPM</p>
             <Input
               className="w-[75px]"
               type="number"
@@ -242,14 +285,50 @@ function PlayPaushBtn({
   return (
     <>
       {playing ? (
-        <Button onClick={stop} className="size-12">
+        <Button onClick={stop} className="h-14 w-14">
           <StopIcon />
         </Button>
       ) : (
-        <Button onClick={play} className="size-12">
+        <Button onClick={play} className="h-14 w-14">
           <PlayIcon />
         </Button>
       )}
     </>
+  );
+}
+
+import { cn } from "@/lib/utils";
+import { Slider } from "@/components/ui/slider";
+
+export function VolumeContextMenu({
+  children,
+  index,
+  note,
+  updateNote,
+}: {
+  children: React.ReactNode;
+  index: number;
+  note: Note;
+  updateNote: (i: number, volume: number, newNote: string) => void;
+}) {
+  const handleVolumeChange = (volume: number) => {
+    console.log("Volume: ", volume);
+    updateNote(index, volume, note[1]);
+  };
+
+  return (
+    <ContextMenu>
+      <ContextMenuTrigger>{children}</ContextMenuTrigger>
+      <ContextMenuContent className="w-full content-center p-4">
+        <Slider
+          max={10}
+          step={0.1}
+          className={cn("w-[60]")}
+          value={[note[0]]}
+          onValueChange={(e) => handleVolumeChange(e[0])}
+        />
+        <p className="text-sm text-center pt-2">{note[0]}</p>
+      </ContextMenuContent>
+    </ContextMenu>
   );
 }

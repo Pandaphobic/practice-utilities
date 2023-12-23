@@ -3,8 +3,8 @@ interface NoteFrequencies {
 }
 // Type info for Metronome class
 //         // Volume, Note
-type Note = [number, string];
-type NoteName = string;
+export type Note = [number, string];
+export type NoteName = string;
 
 const noteFrequencies: NoteFrequencies = {
   C0: 16.35,
@@ -174,6 +174,9 @@ export class Metronome extends EventEmitter {
   }
 
   beep([volume = 6, note = "E4"]: [number, string]) {
+    // skip if note is "."
+    if (note.includes(".")) return;
+
     const duration = 200; // 100 milliseconds for beep
     const audioCtx = new window.AudioContext();
 
@@ -235,6 +238,9 @@ export class Metronome extends EventEmitter {
     if (this.playing) return;
     this.playing = true;
     this.emit("playStatusChanged", this.playing);
+    // Initialize
+    this.beepboop();
+    // Start the interval
     this.intervalId = setInterval(
       this.beepboop.bind(this),
       this.interval * 1000
@@ -264,12 +270,10 @@ export class Metronome extends EventEmitter {
       // If it's neither, we throw an error
       throw new Error("Invalid time signature");
     }
-
-    console.log("new ts:", newTs);
     return newTs;
   }
 
-  // Creates new notes array
+  // utils - how could this work if it was static?
   createNotes(volume = 5, note = "E4", count = 4) {
     const newNotes: Note[] = [];
     for (let i = 0; i < count; i++) {
@@ -277,7 +281,6 @@ export class Metronome extends EventEmitter {
     }
     // set the first note to C4
     newNotes[0][1] = "E5";
-
     return newNotes;
   }
   // -------- Updating Tools --------
