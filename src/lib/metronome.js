@@ -134,7 +134,7 @@ const timeSigs = [
 export class Metronome {
   constructor(bpm, timeSig = [4, 4], notes) {
     this.bpm = bpm;
-    this.timeSig = timeSig;
+    this.timeSignature = timeSig;
     this.notes = notes;
     this.count = 1;
     this.interval = (60 / bpm) * (4 / timeSig[1]);
@@ -182,8 +182,9 @@ export class Metronome {
   }
 
   beepboop() {
+    console.log(this.notes);
     this.beep(this.notes[this.count - 1]);
-    if (this.count === this.timeSig[0]) this.count = 0;
+    if (this.count === this.timeSignature[0]) this.count = 0;
     this.count++;
   }
 
@@ -211,20 +212,51 @@ export class Metronome {
     clearInterval(this.intervalId);
   }
 
-  // Updating Tools
+  parseTs(timeSig) {
+    let newTs;
+    if (typeof timeSig === "string") newTs = timeSig.split("/").map(Number);
+    if (typeof timeSig === "array" && timeSig.length === 2) newTs = timeSig;
+    console.log("new ts:", newTs);
+    return newTs;
+  }
+
+  // Creates new notes array
+  createNotes(volume, note = "E4", count) {
+    const newNotes = [];
+    for (let i = 0; i < count; i++) {
+      newNotes.push([volume, note]);
+    }
+    // set the first note to C4
+    newNotes[0][1] = "C4";
+
+    return newNotes;
+  }
+  // -------- Updating Tools --------
+
+  // Updates the bpm
   updateBpm(bpm) {
     this.bpm = bpm;
-    this.interval = (60 / bpm) * (4 / this.timeSig[1]);
+    this.interval = (60 / bpm) * (4 / this.timeSignature[1]);
     this.reset();
   }
-
-  updateTimeSig(timeSig) {
-    this.timeSig = timeSig;
-    this.interval = (60 / this.bpm) * (4 / timeSig[1]);
-  }
-
+  // Updates the notes
   updateNotes(notes) {
     this.notes = notes;
+  }
+  // Updates the time signature
+  updateTimeSignature(
+    timeSig = this.parseTs("4/4"),
+    newNotes = this.createNotes(6, "E4", timeSig[0])
+  ) {
+    this.stop();
+    // Apply the new time signature
+    this.timeSignature = timeSig;
+    // update the notes
+    this.updateNotes(newNotes);
+    // Update the interval
+    this.interval = (60 / this.bpm) * (4 / timeSig[1]);
+    // Reset the count
+    this.reset();
   }
 }
 

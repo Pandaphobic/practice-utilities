@@ -9,7 +9,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectTrigger,
@@ -17,7 +16,6 @@ import {
   SelectContent,
   SelectGroup,
   SelectItem,
-  SelectLabel,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 // Icons
@@ -29,7 +27,7 @@ import { Metronome } from "@/lib/metronome";
 // - put notes in state
 // - add ability to edit notes
 // - top number dictates notes.length
-const notes = [
+const initNotes = [
   // volume, note
   [4, "E5"],
   [4, "E4"],
@@ -37,10 +35,11 @@ const notes = [
   [4, "E4"],
 ];
 
-const metronome = new Metronome(140, [4, 4], notes);
+const metronome = new Metronome(140, [4, 4], initNotes);
 
 export default function MetronomePage() {
   const [timeSignature, setTimeSignature] = useState("4/4");
+  const [notes, setNotes] = useState(initNotes); // [volume, note
   const [bpm, setBpm] = useState(140);
 
   const handlePlay = () => {
@@ -56,18 +55,29 @@ export default function MetronomePage() {
     metronome.updateBpm(Number(e.target.value));
   };
 
+  const handleTimeSignatureChange = (newTs: string) => {
+    // update app state
+    setTimeSignature(newTs);
+    // Get the numerator
+    const newTsTop = Number(newTs.split("/")[0]);
+    // create a new lis of notes same length as the new ts top
+    const newNotes = metronome.createNotes(5, "E4", newTsTop);
+    // update notes in app state
+    setNotes(newNotes);
+    // update metronome
+    metronome.updateTimeSignature(metronome.parseTs(newTs), newNotes);
+  };
+
   return (
     <div className="flex flex-col items-center justify-between">
       <Card className="max-w-[375px] w-full">
         <CardHeader>
           <CardTitle className="text-2xl">Metronome</CardTitle>
-          {/* <CardDescription className="text-sm">
-            What are we doing?
-          </CardDescription> */}
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 border-2 p-3 rounded-sm m-2">
-            <Select onValueChange={setTimeSignature} value={timeSignature}>
+          <CardDescription className="grid grid-cols-2 text-sm">
+            <Select
+              onValueChange={handleTimeSignatureChange}
+              value={timeSignature}
+            >
               <SelectTrigger className="w-[75px]">
                 <SelectValue placeholder="Time Signature" />
               </SelectTrigger>
@@ -90,21 +100,20 @@ export default function MetronomePage() {
               </SelectContent>
             </Select>
             <Input
+              className="w-20"
               type="number"
               placeholder="BPM"
               value={bpm}
               onChange={handleBpmChange}
             />
+          </CardDescription>
+        </CardHeader>
+        <CardContent></CardContent>
+        <CardFooter className="flex justify-center">
+          <div className="grid grid-cols-2 p-3 m-2">
+            <PlayPaushBtn handlePlay={handlePlay} handleStop={handleStop} />
           </div>
-          <div className="grid grid-cols-2 border-2 p-3 rounded-sm m-2">
-            <PlayPaushBtn
-              // playing={playing}
-              handlePlay={handlePlay}
-              handleStop={handleStop}
-            />
-          </div>
-        </CardContent>
-        <CardFooter className="flex justify-center"></CardFooter>
+        </CardFooter>
       </Card>
     </div>
   );
