@@ -109,6 +109,28 @@ const noteFrequencies = {
   B8: 7902.13,
 };
 
+const timeSigs = [
+  "2/4",
+  "3/4",
+  "4/4",
+  "5/4",
+  "6/4",
+  "7/4",
+  "8/4",
+  "9/4",
+  "10/4",
+  "11/4",
+  "12/4",
+  "13/4",
+  "2/8",
+  "3/8",
+  "4/8",
+  "5/8",
+  "6/8",
+  "7/8",
+  "8/8",
+];
+
 export class Metronome {
   constructor(bpm, timeSig = [4, 4], notes) {
     this.bpm = bpm;
@@ -118,6 +140,8 @@ export class Metronome {
     this.interval = (60 / bpm) * (4 / timeSig[1]);
     this.intervalId = null;
     this.playing = false;
+    this.notesList = Object.keys(noteFrequencies);
+    this.timeSignatures = timeSigs;
   }
 
   beep([volume = 6, note = "E4"]) {
@@ -163,6 +187,14 @@ export class Metronome {
     this.count++;
   }
 
+  reset() {
+    if (this.playing) {
+      this.stop();
+      this.play();
+    }
+    this.count = 1;
+  }
+
   play() {
     if (this.playing) return;
     this.playing = true;
@@ -171,10 +203,28 @@ export class Metronome {
       this.interval * 1000
     );
   }
+
   stop() {
     if (!this.playing) return;
+    this.count = 1;
     this.playing = false;
     clearInterval(this.intervalId);
+  }
+
+  // Updating Tools
+  updateBpm(bpm) {
+    this.bpm = bpm;
+    this.interval = (60 / bpm) * (4 / this.timeSig[1]);
+    this.reset();
+  }
+
+  updateTimeSig(timeSig) {
+    this.timeSig = timeSig;
+    this.interval = (60 / this.bpm) * (4 / timeSig[1]);
+  }
+
+  updateNotes(notes) {
+    this.notes = notes;
   }
 }
 

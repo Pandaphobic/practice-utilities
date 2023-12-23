@@ -25,29 +25,35 @@ import { PlayIcon, StopIcon } from "@radix-ui/react-icons";
 // Metronome
 import { Metronome } from "@/lib/metronome";
 
+// TODO:
+// - put notes in state
+// - add ability to edit notes
+// - top number dictates notes.length
 const notes = [
-  [4, "F#4"],
-  [4, "E4"],
-  [4, "E4"],
-  [4, "F#4"],
+  // volume, note
+  [4, "E5"],
   [4, "E4"],
   [4, "E4"],
   [4, "E4"],
 ];
 
+const metronome = new Metronome(140, [4, 4], notes);
+
 export default function MetronomePage() {
   const [timeSignature, setTimeSignature] = useState("4/4");
-
-  const metronome = new Metronome(120, [7, 4], notes);
+  const [bpm, setBpm] = useState(140);
 
   const handlePlay = () => {
-    console.log("Play");
     metronome.play();
   };
 
   const handleStop = () => {
-    console.log("Stop");
     metronome.stop();
+  };
+
+  const handleBpmChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setBpm(Number(e.target.value));
+    metronome.updateBpm(Number(e.target.value));
   };
 
   return (
@@ -60,49 +66,80 @@ export default function MetronomePage() {
           </CardDescription> */}
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 gap-5">
+          <div className="grid grid-cols-2 border-2 p-3 rounded-sm m-2">
             <Select onValueChange={setTimeSignature} value={timeSignature}>
               <SelectTrigger className="w-[75px]">
                 <SelectValue placeholder="Time Signature" />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectItem value="2/4">2/4</SelectItem>
-                  <SelectItem value="3/4">3/4</SelectItem>
-                  <SelectItem value="4/4">4/4</SelectItem>
-                  <SelectItem value="5/4">5/4</SelectItem>
-                  <SelectItem value="6/4">6/4</SelectItem>
-                  <SelectItem value="7/4">7/4</SelectItem>
-                  <SelectItem value="8/4">8/4</SelectItem>
-                  <SelectItem value="9/4">9/4</SelectItem>
-                  <SelectItem value="10/4">10/4</SelectItem>
-                  <SelectItem value="11/4">11/4</SelectItem>
-                  <SelectItem value="12/4">12/4</SelectItem>
-                  <SelectItem value="13/4">13/4</SelectItem>
-                  <SelectItem value="2/8">2/8</SelectItem>
-                  <SelectItem value="3/8">3/8</SelectItem>
-                  <SelectItem value="4/8">4/8</SelectItem>
-                  <SelectItem value="5/8">5/8</SelectItem>
-                  <SelectItem value="6/8">6/8</SelectItem>
-                  <SelectItem value="7/8">7/8</SelectItem>
-                  <SelectItem value="8/8">8/8</SelectItem>
+                  {metronome ? (
+                    metronome.timeSignatures.map((timeSignature) => (
+                      <SelectItem
+                        key={timeSignature}
+                        value={timeSignature}
+                        className="text-sm"
+                      >
+                        {timeSignature}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="4/4">4/4</SelectItem>
+                  )}
                 </SelectGroup>
               </SelectContent>
             </Select>
-            <Input type="number" placeholder="BPM" />
+            <Input
+              type="number"
+              placeholder="BPM"
+              value={bpm}
+              onChange={handleBpmChange}
+            />
           </div>
-          <div className="grid grid-cols-2 border-2 p-3 rounded-sm">
-            {/* audio controls */}
-            <Button onClick={handlePlay} className="size-12">
-              <PlayIcon />
-            </Button>
-            <Button onClick={handleStop} className="size-12">
-              <StopIcon />
-            </Button>
+          <div className="grid grid-cols-2 border-2 p-3 rounded-sm m-2">
+            <PlayPaushBtn
+              // playing={playing}
+              handlePlay={handlePlay}
+              handleStop={handleStop}
+            />
           </div>
         </CardContent>
         <CardFooter className="flex justify-center"></CardFooter>
       </Card>
     </div>
+  );
+}
+
+function PlayPaushBtn({
+  handlePlay,
+  handleStop,
+}: {
+  handlePlay: () => void;
+  handleStop: () => void;
+}) {
+  const [playing, setPlaying] = useState(false);
+
+  function play() {
+    handlePlay();
+    setPlaying(true);
+  }
+
+  function stop() {
+    handleStop();
+    setPlaying(false);
+  }
+
+  return (
+    <>
+      {playing ? (
+        <Button onClick={stop} className="size-12">
+          <StopIcon />
+        </Button>
+      ) : (
+        <Button onClick={play} className="size-12">
+          <PlayIcon />
+        </Button>
+      )}
+    </>
   );
 }
