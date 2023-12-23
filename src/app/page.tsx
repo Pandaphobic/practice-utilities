@@ -34,7 +34,7 @@ export default function Home() {
             <Button
               onClick={() => setSelected(0)}
               className={`h-16 w-20 ${
-                selected === 0 ? "bg-white" : "bg-slate-400"
+                selected === 0 ? "bg-white" : "bg-gray-600"
               }`}
             >
               <MetronomeIcon size={25} />
@@ -42,13 +42,13 @@ export default function Home() {
             <Button
               onClick={() => setSelected(1)}
               className={`h-16 w-20 ${
-                selected === 1 ? "bg-white" : "bg-slate-400"
+                selected === 1 ? "bg-white" : "bg-gray-600"
               }`}
             ></Button>
             <Button
               onClick={() => setSelected(2)}
               className={`h-16 w-20 ${
-                selected === 2 ? "bg-white" : "bg-slate-400"
+                selected === 2 ? "bg-white" : "bg-gray-600"
               }`}
             ></Button>
           </div>

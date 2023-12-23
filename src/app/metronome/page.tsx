@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -19,28 +19,55 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 // Icons
-import { PlayIcon, StopIcon } from "@radix-ui/react-icons";
+import {
+  PlayIcon,
+  StopIcon,
+  ArrowLeftIcon,
+  ChevronUpIcon,
+} from "@radix-ui/react-icons";
 // Metronome
 import { Metronome } from "@/lib/metronome";
+import { Label, SelectLabel } from "@radix-ui/react-select";
+import { useRouter } from "next/navigation";
 
 // TODO:
-// - put notes in state
+// x put notes in state
 // - add ability to edit notes
-// - top number dictates notes.length
-const initNotes = [
-  // volume, note
-  [4, "E5"],
-  [4, "E4"],
-  [4, "E4"],
-  [4, "E4"],
-];
-
-const metronome = new Metronome(140, [4, 4], initNotes);
+// x top number dictates notes.length
+const metronome = new Metronome(140);
 
 export default function MetronomePage() {
+  // Router
+  const router = useRouter();
+  // App State
   const [timeSignature, setTimeSignature] = useState("4/4");
-  const [notes, setNotes] = useState(initNotes); // [volume, note
+  const [notes, setNotes] = useState(metronome.notes);
+  const [playing, setPlaying] = useState(false);
+  const [count, setCount] = useState(0);
+  // [volume, note
   const [bpm, setBpm] = useState(140);
+
+  useEffect(() => {
+    // play status
+    const handlePlayStatusChanged = (playing: boolean) => {
+      console.log(`Metronome is now ${playing ? "playing" : "stopped"}`);
+      setPlaying(playing);
+    };
+    // current count
+    const handleCount = (count: number) => {
+      console.log(`Count: ${count}`);
+      setCount(count);
+    };
+
+    // Add the event listener to the metronome
+    metronome.on("playStatusChanged", handlePlayStatusChanged);
+    metronome.on("count", handleCount);
+    // Clean up the event listener when the component unmounts
+    return () => {
+      metronome.off("playStatusChanged", handlePlayStatusChanged);
+      metronome.off("count", handleCount);
+    };
+  }, []);
 
   const handlePlay = () => {
     metronome.play();
@@ -48,11 +75,35 @@ export default function MetronomePage() {
 
   const handleStop = () => {
     metronome.stop();
+    setCount(0);
   };
 
   const handleBpmChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setBpm(Number(e.target.value));
     metronome.updateBpm(Number(e.target.value));
+  };
+
+  const incrementNote = (i: number) => {
+    const nextNote = metronome.notesList.indexOf(notes[i][1]) + 1;
+    const newNote = metronome.notesList[nextNote];
+
+    updateNote(i, notes[i][0], newNote);
+  };
+
+  const decrementNote = (i: number) => {
+    const nextNote = metronome.notesList.indexOf(notes[i][1]) - 1;
+    const newNote = metronome.notesList[nextNote];
+
+    updateNote(i, notes[i][0], newNote);
+  };
+
+  const updateNote = (i: number, volume: number, newNote: string) => {
+    if (metronome.notesList.includes(newNote)) {
+      const newNotes = [...notes];
+      newNotes[i] = [volume, newNote];
+      metronome.updateNotes(newNotes);
+      setNotes(newNotes);
+    }
   };
 
   const handleTimeSignatureChange = (newTs: string) => {
@@ -70,10 +121,55 @@ export default function MetronomePage() {
 
   return (
     <div className="flex flex-col items-center justify-between">
-      <Card className="max-w-[375px] w-full">
-        <CardHeader>
+      <Card className="max-w-[600px] w-full">
+        <CardHeader className="pb-0">
           <CardTitle className="text-2xl">Metronome</CardTitle>
           <CardDescription className="grid grid-cols-2 text-sm">
+            Set Time Signature, BMP and Notes.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="pt-0 mt-0">
+          <div className={`flex items-center justify-between p-10`}>
+            {notes.map((note, i) => (
+              <div className="text-center p-1" key={i}>
+                <Button
+                  className="p-1 h-6 mb-2"
+                  onClick={() => incrementNote(i)}
+                >
+                  <ChevronUpIcon />
+                </Button>
+
+                <div
+                  key={i + 1}
+                  className={`h-14 w-14 rounded-xl ${
+                    i + 1 === count ? "bg-white" : "bg-slate-900"
+                  } ${i + 1 === count ? "text-black" : "text-white"}`}
+                >
+                  <p className="text-center justify-center flex flex-col h-full w-full">
+                    {note[1]}
+                  </p>
+                  <Button
+                    className="p-1 h-6 mt-2"
+                    onClick={() => decrementNote(i)}
+                  >
+                    <ChevronUpIcon className="transform rotate-180" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+        <CardFooter className="flex flex-row content-center justify-center  pt-5">
+          <div className="m-auto">
+            <Button
+              variant={"outline"}
+              className="size-12 justify-center"
+              onClick={() => router.push("/")}
+            >
+              <ArrowLeftIcon />
+            </Button>
+          </div>
+          <div className="m-auto">
             <Select
               onValueChange={handleTimeSignatureChange}
               value={timeSignature}
@@ -83,6 +179,7 @@ export default function MetronomePage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
+                  <SelectLabel>Time Signature</SelectLabel>
                   {metronome ? (
                     metronome.timeSignatures.map((timeSignature) => (
                       <SelectItem
@@ -99,19 +196,23 @@ export default function MetronomePage() {
                 </SelectGroup>
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="m-auto">
             <Input
-              className="w-20"
+              className="w-[75px]"
               type="number"
               placeholder="BPM"
               value={bpm}
               onChange={handleBpmChange}
             />
-          </CardDescription>
-        </CardHeader>
-        <CardContent></CardContent>
-        <CardFooter className="flex justify-center">
-          <div className="grid grid-cols-2 p-3 m-2">
-            <PlayPaushBtn handlePlay={handlePlay} handleStop={handleStop} />
+          </div>
+          <div className="m-auto">
+            <PlayPaushBtn
+              playing={playing}
+              handlePlay={handlePlay}
+              handleStop={handleStop}
+            />
           </div>
         </CardFooter>
       </Card>
@@ -120,22 +221,20 @@ export default function MetronomePage() {
 }
 
 function PlayPaushBtn({
+  playing,
   handlePlay,
   handleStop,
 }: {
+  playing: boolean;
   handlePlay: () => void;
   handleStop: () => void;
 }) {
-  const [playing, setPlaying] = useState(false);
-
   function play() {
     handlePlay();
-    setPlaying(true);
   }
 
   function stop() {
     handleStop();
-    setPlaying(false);
   }
 
   return (

@@ -28,7 +28,7 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "src/idea.js",
-    "src/lib/metronome.js"
+    "src/lib/metronome.ts"
   ],
   "exclude": ["node_modules"]
 }

@@ -1,4 +1,12 @@
-const noteFrequencies = {
+interface NoteFrequencies {
+  [key: string]: number;
+}
+// Type info for Metronome class
+//         // Volume, Note
+type Note = [number, string];
+type NoteName = string;
+
+const noteFrequencies: NoteFrequencies = {
   C0: 16.35,
   "C#0": 17.32,
   D0: 18.35,
@@ -131,8 +139,29 @@ const timeSigs = [
   "8/8",
 ];
 
-export class Metronome {
-  constructor(bpm, timeSig = [4, 4], notes) {
+const initNotes: Note[] = [
+  // volume, note
+  [4, "E5"],
+  [4, "E4"],
+  [4, "E4"],
+  [4, "E4"],
+];
+
+import { EventEmitter } from "events";
+
+export class Metronome extends EventEmitter {
+  bpm: number;
+  timeSignature: number[];
+  notes: Note[];
+  count: number;
+  interval: number;
+  intervalId: any;
+  playing: boolean;
+  notesList: string[];
+  timeSignatures: string[];
+
+  constructor(bpm = 120, timeSig = [4, 4], notes = initNotes) {
+    super();
     this.bpm = bpm;
     this.timeSignature = timeSig;
     this.notes = notes;
@@ -144,15 +173,20 @@ export class Metronome {
     this.timeSignatures = timeSigs;
   }
 
-  beep([volume = 6, note = "E4"]) {
+  beep([volume = 6, note = "E4"]: [number, string]) {
     const duration = 200; // 100 milliseconds for beep
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const audioCtx = new window.AudioContext();
 
     const oscillator = audioCtx.createOscillator();
     const gainNode = audioCtx.createGain();
     // Convert note to frequency (in Hz) - you can expand this function for more notes
-    function noteToFrequency(note) {
-      return noteFrequencies[note.toUpperCase()];
+    function noteToFrequency(noteName: NoteName) {
+      const noteFreqs = Object.keys(noteFrequencies);
+      if (!noteFreqs.includes(note.toUpperCase()))
+        throw new Error("Invalid note");
+      const noteN = noteName.toUpperCase().toString();
+
+      return noteFrequencies[noteN];
     }
 
     const frequency = noteToFrequency(note);
@@ -182,6 +216,7 @@ export class Metronome {
   }
 
   beepboop() {
+    this.emit("count", this.count);
     console.log(this.notes);
     this.beep(this.notes[this.count - 1]);
     if (this.count === this.timeSignature[0]) this.count = 0;
@@ -199,6 +234,7 @@ export class Metronome {
   play() {
     if (this.playing) return;
     this.playing = true;
+    this.emit("playStatusChanged", this.playing);
     this.intervalId = setInterval(
       this.beepboop.bind(this),
       this.interval * 1000
@@ -209,38 +245,51 @@ export class Metronome {
     if (!this.playing) return;
     this.count = 1;
     this.playing = false;
+    this.emit("playStatusChanged", this.playing);
     clearInterval(this.intervalId);
   }
 
-  parseTs(timeSig) {
+  parseTs(timeSig: string | number[]) {
     let newTs;
-    if (typeof timeSig === "string") newTs = timeSig.split("/").map(Number);
-    if (typeof timeSig === "array" && timeSig.length === 2) newTs = timeSig;
+    // We can check by length and type
+    // because a valid timeSig string will always be 3 characters
+    // While a valid array will always be 2
+    if (timeSig.length >= 3 && typeof timeSig === "string") {
+      // If it's a string, we split it and parse it to an int
+      newTs = timeSig.split("/").map((num) => parseInt(num));
+    } else if (timeSig.length === 2 && typeof timeSig === "object") {
+      // If it's an array, we just parse it to an int
+      newTs = timeSig.map((num: number) => Number(num));
+    } else {
+      // If it's neither, we throw an error
+      throw new Error("Invalid time signature");
+    }
+
     console.log("new ts:", newTs);
     return newTs;
   }
 
   // Creates new notes array
-  createNotes(volume, note = "E4", count) {
-    const newNotes = [];
+  createNotes(volume = 5, note = "E4", count = 4) {
+    const newNotes: Note[] = [];
     for (let i = 0; i < count; i++) {
       newNotes.push([volume, note]);
     }
     // set the first note to C4
-    newNotes[0][1] = "C4";
+    newNotes[0][1] = "E5";
 
     return newNotes;
   }
   // -------- Updating Tools --------
 
   // Updates the bpm
-  updateBpm(bpm) {
+  updateBpm(bpm: number) {
     this.bpm = bpm;
     this.interval = (60 / bpm) * (4 / this.timeSignature[1]);
     this.reset();
   }
   // Updates the notes
-  updateNotes(notes) {
+  updateNotes(notes: Note[]) {
     this.notes = notes;
   }
   // Updates the time signature
