@@ -21,10 +21,18 @@ import { Button } from "@/components/ui/button";
 import {
   ContextMenu,
   ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuShortcut,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 // Icons
 import {
   PlayIcon,
@@ -32,16 +40,15 @@ import {
   ArrowLeftIcon,
   ChevronUpIcon,
   ChevronDownIcon,
+  InfoCircledIcon,
 } from "@radix-ui/react-icons";
+import MetronomeIcon from "@/components/icons/metronome";
 // Metronome
 import { Metronome, Note } from "@/lib/metronome";
-import { Label, SelectLabel } from "@radix-ui/react-select";
+import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
 
-// TODO:
-// x put notes in state
-// - add ability to edit notes
-// x top number dictates notes.length
+// Init metronome
 const metronome = new Metronome(140);
 
 export default function MetronomePage() {
@@ -74,7 +81,7 @@ export default function MetronomePage() {
       metronome.off("count", handleCount);
     };
   }, []);
-
+  // Plaback Controls
   const handlePlay = () => {
     metronome.play();
   };
@@ -83,7 +90,7 @@ export default function MetronomePage() {
     metronome.stop();
     setCount(0);
   };
-
+  // Update Controls
   const handleBpmChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setBpm(Number(e.target.value));
     metronome.updateBpm(Number(e.target.value));
@@ -153,13 +160,70 @@ export default function MetronomePage() {
     <div className="flex flex-col items-center justify-between">
       <Card className=" w-full">
         <CardHeader className="pb-0">
-          <CardTitle className="text-2xl">Metronome</CardTitle>
+          <CardTitle className="text-2xl">
+            Metronome
+            <AlertDialog>
+              <AlertDialogTrigger>
+                <Button className="text-lg p-1" variant="ghost">
+                  <InfoCircledIcon height={25} />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="w-[500px]">
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Metronome v1.0 Info</AlertDialogTitle>
+                </AlertDialogHeader>
+                <AlertDialogDescription>
+                  <div className="flex row-auto pt-3">
+                    <div className="container p-0 w-60 flex items-center justify-center">
+                      <MetronomeIcon size={85} fill="#fff" />
+                    </div>
+                    <div className="container pl-0 ml-0 text-left">
+                      <p className="text-xs pl-0 p-0.5 rounded-md">
+                        <strong>BPM:</strong>{" "}
+                        <span className="float-right">Beats per minute.</span>
+                      </p>
+                      <p className="text-xs pl-0 p-0.5 rounded-md">
+                        <strong>Left Click:</strong>{" "}
+                        <span className="float-right">
+                          To mute/unmute notes.
+                        </span>
+                      </p>
+                      <p className="text-xs pl-0 p-0.5 rounded-md">
+                        <strong>Right Click:</strong>{" "}
+                        <span className="float-right">
+                          To change volume of notes.
+                        </span>
+                      </p>
+                      <p className="text-xs pl-0 p-0.5 rounded-md">
+                        <strong>Arrow Up:</strong>{" "}
+                        <span className="float-right">
+                          Increase note by 1 tone.
+                        </span>
+                      </p>
+                      <p className="text-xs pl-0 p-0.5 rounded-md">
+                        <strong>Arrow Down:</strong>{" "}
+                        <span className="float-right">
+                          Decrease note by 1 tone.
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                </AlertDialogDescription>
+                <AlertDialogFooter className="pt-2">
+                  <AlertDialogAction className="text-sm w-full">
+                    Close
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </CardTitle>
+
           <CardDescription className="grid grid-cols-2 text-sm">
             Set Time Signature, BMP and Notes.
           </CardDescription>
         </CardHeader>
         <CardContent className="py-0 my-2">
-          <div className={`flex items-center justify-between px-4 py-4`}>
+          <div className={`flex items-center justify-center gap-3 px-4 py-4`}>
             {notes.map((note, i) => (
               <VolumeContextMenu
                 key={i}
@@ -211,19 +275,16 @@ export default function MetronomePage() {
             </Button>
           </div>
           <div className="m-auto flex-row">
-            <div>
-              <p className="text-sm">Time Sig.</p>
-            </div>
+            <Label className="text-sm">Time Signature</Label>
             <Select
               onValueChange={handleTimeSignatureChange}
               value={timeSignature}
             >
-              <SelectTrigger className="w-[75px]">
+              <SelectTrigger className="w-[150px]">
                 <SelectValue placeholder="Time Signature" />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectLabel>Time Signature</SelectLabel>
                   {metronome ? (
                     metronome.timeSignatures.map((timeSignature) => (
                       <SelectItem
@@ -243,9 +304,9 @@ export default function MetronomePage() {
           </div>
 
           <div className="m-auto">
-            <p className="text-sm">BPM</p>
+            <Label className="text-sm">Beats Per Minute</Label>
             <Input
-              className="w-[75px]"
+              className="w-[150px]"
               type="number"
               placeholder="BPM"
               value={bpm}
