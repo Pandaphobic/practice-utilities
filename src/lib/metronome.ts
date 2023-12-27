@@ -139,16 +139,14 @@ const timeSigs = [
   "8/8",
 ];
 
-const initNotes: Note[] = [
+import { EventEmitter } from "events";
+export const initNotes: Note[] = [
   // volume, note
   [4, "E5"],
   [4, "E4"],
   [4, "E4"],
   [4, "E4"],
 ];
-
-import { EventEmitter } from "events";
-
 export class Metronome extends EventEmitter {
   bpm: number;
   timeSignature: number[];
@@ -159,6 +157,7 @@ export class Metronome extends EventEmitter {
   playing: boolean;
   notesList: string[];
   timeSignatures: string[];
+  audioCtx?: AudioContext;
 
   constructor(bpm = 120, timeSig = [4, 4], notes = initNotes) {
     super();
@@ -171,17 +170,21 @@ export class Metronome extends EventEmitter {
     this.playing = false;
     this.notesList = Object.keys(noteFrequencies);
     this.timeSignatures = timeSigs;
+    // Check if window is defined before creating AudioContext
+    if (typeof window !== "undefined") {
+      this.audioCtx = new window.AudioContext();
+    }
   }
 
   beep([volume = 6, note = "E4"]: [number, string]) {
+    if (!this.audioCtx) return console.log("No audio context");
     // skip if note is "."
     if (note.includes(".")) return;
 
     const duration = 200; // 100 milliseconds for beep
-    const audioCtx = new window.AudioContext();
 
-    const oscillator = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
+    const oscillator = this.audioCtx.createOscillator();
+    const gainNode = this.audioCtx.createGain();
     // Convert note to frequency (in Hz) - you can expand this function for more notes
     function noteToFrequency(noteName: NoteName) {
       const noteFreqs = Object.keys(noteFrequencies);
@@ -199,22 +202,21 @@ export class Metronome extends EventEmitter {
     gainNode.gain.value = validVolume;
 
     oscillator.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
+    gainNode.connect(this.audioCtx.destination);
 
     oscillator.start();
 
     // Start fade out slightly before the end of the duration
     const fadeOutTime = 25; // 50 milliseconds for fade out
-    gainNode.gain.setValueAtTime(validVolume, audioCtx.currentTime);
+    gainNode.gain.setValueAtTime(validVolume, this.audioCtx.currentTime);
     gainNode.gain.exponentialRampToValueAtTime(
       0.001,
-      audioCtx.currentTime + (duration - fadeOutTime) / 1000
+      this.audioCtx.currentTime + (duration - fadeOutTime) / 1000
     );
 
     // Stop the oscillator after the duration
     setTimeout(() => {
       oscillator.stop();
-      audioCtx.close();
     }, duration);
   }
 
@@ -234,12 +236,18 @@ export class Metronome extends EventEmitter {
     this.count = 1;
   }
 
-  play() {
+  async play() {
+    if (!this.audioCtx) return console.log("No audio context");
     if (this.playing) return;
     this.playing = true;
     this.emit("playStatusChanged", this.playing);
-    // Initialize
-    this.beepboop();
+
+    // Check if the AudioContext is in a suspended state (this is the case in a new tab,
+    // and after a document's been hidden and re-shown)
+    if (this.audioCtx.state === "suspended") {
+      await this.audioCtx.resume();
+    }
+
     // Start the interval
     this.intervalId = setInterval(
       this.beepboop.bind(this),
@@ -309,6 +317,12 @@ export class Metronome extends EventEmitter {
     this.interval = (60 / this.bpm) * (4 / timeSig[1]);
     // Reset the count
     this.reset();
+  }
+
+  updateGlobalVolume(volume: number) {
+    this.notes.forEach((note) => {
+      note[0] = volume;
+    });
   }
 }
 

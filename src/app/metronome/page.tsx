@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -18,21 +17,6 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuTrigger,
-} from "@/components/ui/context-menu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 // Icons
 import {
   PlayIcon,
@@ -40,14 +24,15 @@ import {
   ArrowLeftIcon,
   ChevronUpIcon,
   ChevronDownIcon,
-  InfoCircledIcon,
+  ChevronLeftIcon,
 } from "@radix-ui/react-icons";
-import MetronomeIcon from "@/components/icons/metronome";
 // Metronome
 import { Metronome, Note } from "@/lib/metronome";
 import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
-
+import MetronomeInfo from "@/components/mtnm-info";
+import { VolumeContextMenu } from "@/components/mtnm-note-volume";
+import { Slider } from "@/components/ui/slider";
 // Init metronome
 const metronome = new Metronome(140);
 
@@ -60,6 +45,7 @@ export default function MetronomePage() {
   const [playing, setPlaying] = useState(false);
   const [count, setCount] = useState(0);
   const [bpm, setBpm] = useState(140);
+  const [globalVolume, setGlobalVolume] = useState(5);
 
   useEffect(() => {
     // play status
@@ -119,7 +105,7 @@ export default function MetronomePage() {
     throw new Error("Note not found");
   };
 
-  const muteNote = (i: number) => {
+  const handleMuteUnmute = (i: number) => {
     if (notes[i][1].includes(".")) {
       console.log("unmute note");
       try {
@@ -143,6 +129,11 @@ export default function MetronomePage() {
     }
   };
 
+  const updateGlobalVolume = (volume: number) => {
+    setGlobalVolume(volume);
+    metronome.updateGlobalVolume(volume);
+  };
+
   const handleTimeSignatureChange = (newTs: string) => {
     // update app state
     setTimeSignature(newTs);
@@ -157,73 +148,82 @@ export default function MetronomePage() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-between">
-      <Card className=" w-full">
-        <CardHeader className="pb-0">
-          <CardTitle className="text-2xl">
+    <div className="flex flex-col items-center justify-between w-[80%]">
+      <Card className="w-full">
+        <CardHeader className="flex-row content-center">
+          <div className="items-center">
+            <Button
+              variant={"ghost"}
+              className="h-11 w-11 p-0"
+              onClick={() => router.push("/")}
+            >
+              <ArrowLeftIcon className="size-7" />
+            </Button>
+          </div>
+          <CardTitle className="text-2xl vertical-center">
             Metronome
-            <AlertDialog>
-              <AlertDialogTrigger>
-                <Button className="text-lg p-1" variant="ghost">
-                  <InfoCircledIcon height={25} />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent className="w-[500px]">
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Metronome v1.0 Info</AlertDialogTitle>
-                </AlertDialogHeader>
-                <AlertDialogDescription>
-                  <div className="flex row-auto pt-3">
-                    <div className="container p-0 w-60 flex items-center justify-center">
-                      <MetronomeIcon size={85} fill="#fff" />
-                    </div>
-                    <div className="container pl-0 ml-0 text-left">
-                      <p className="text-xs pl-0 p-0.5 rounded-md">
-                        <strong>BPM:</strong>{" "}
-                        <span className="float-right">Beats per minute.</span>
-                      </p>
-                      <p className="text-xs pl-0 p-0.5 rounded-md">
-                        <strong>Left Click:</strong>{" "}
-                        <span className="float-right">
-                          To mute/unmute notes.
-                        </span>
-                      </p>
-                      <p className="text-xs pl-0 p-0.5 rounded-md">
-                        <strong>Right Click:</strong>{" "}
-                        <span className="float-right">
-                          To change volume of notes.
-                        </span>
-                      </p>
-                      <p className="text-xs pl-0 p-0.5 rounded-md">
-                        <strong>Arrow Up:</strong>{" "}
-                        <span className="float-right">
-                          Increase note by 1 tone.
-                        </span>
-                      </p>
-                      <p className="text-xs pl-0 p-0.5 rounded-md">
-                        <strong>Arrow Down:</strong>{" "}
-                        <span className="float-right">
-                          Decrease note by 1 tone.
-                        </span>
-                      </p>
-                    </div>
-                  </div>
-                </AlertDialogDescription>
-                <AlertDialogFooter className="pt-2">
-                  <AlertDialogAction className="text-sm w-full">
-                    Close
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            <MetronomeInfo />
           </CardTitle>
-
-          <CardDescription className="grid grid-cols-2 text-sm">
+          {/* <CardDescription className="grid grid-cols-2 text-sm">
             Set Time Signature, BMP and Notes.
-          </CardDescription>
+          </CardDescription> */}
         </CardHeader>
         <CardContent className="py-0 my-2">
-          <div className={`flex items-center justify-center gap-3 px-4 py-4`}>
+          {/* Center and take up whole row */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 px-0 py-4">
+            <div className="justify-center mx-auto">
+              <Label className="text-xs">Time Signature</Label>
+              <Select
+                onValueChange={handleTimeSignatureChange}
+                defaultValue="4/4"
+                value={timeSignature}
+              >
+                <SelectTrigger className="w-[110px] h-8">
+                  <SelectValue placeholder="Time Signature" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {metronome &&
+                      metronome.timeSignatures.map((timeSignature) => (
+                        <SelectItem
+                          key={timeSignature}
+                          value={timeSignature}
+                          className="text-sm"
+                        >
+                          {timeSignature}
+                        </SelectItem>
+                      ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="justify-center mx-auto">
+              <Label className="text-xs">Volume</Label>
+              <Slider
+                max={10}
+                step={0.1}
+                className="w-32 color-[#fff]"
+                value={[globalVolume]}
+                onValueChange={(e) => updateGlobalVolume(e[0])}
+              />
+            </div>
+            <div className="justify-center mx-auto">
+              <Label className="text-xs">BPM</Label>
+              <Input
+                className="w-[110px] h-8"
+                type="number"
+                placeholder="BPM"
+                value={bpm}
+                onChange={handleBpmChange}
+              />
+            </div>
+          </div>
+          <div
+            className={`grid grid-flow-row-dense gap-4 px-0 py-4`}
+            style={{
+              gridTemplateColumns: "repeat(auto-fit, minmax(100px, 1fr))",
+            }}
+          >
             {notes.map((note, i) => (
               <VolumeContextMenu
                 key={i}
@@ -231,32 +231,41 @@ export default function MetronomePage() {
                 note={note}
                 updateNote={updateNote}
               >
-                <div className="text-center p-1" key={i}>
-                  <Button
-                    variant={"outline"}
-                    className="p-1 h-6 mb-2"
-                    onClick={() => incrementNote(i)}
-                  >
-                    <ChevronUpIcon />
-                  </Button>
-                  <div
-                    key={i + 1}
-                    onClick={() => muteNote(i)}
-                    className={`h-14 w-14 rounded-xl border cursor-pointer ${
-                      i + 1 === count ? "bg-white" : ""
-                    } ${i + 1 === count ? "text-black" : "text-white"}`}
-                  >
-                    <p className="text-center justify-center flex flex-col h-full w-full">
-                      {note[1].includes(".") ? " - " : note[1]}
-                    </p>
+                <div className="flex flex-col items-center p-1" key={i}>
+                  {/* INCREMENT NOTE */}
+                  <div>
+                    <Button
+                      variant={"outline"}
+                      className="p-1 h-6 mb-2"
+                      onClick={() => incrementNote(i)}
+                    >
+                      <ChevronUpIcon />
+                    </Button>
                   </div>
-                  <Button
-                    variant={"outline"}
-                    className="p-1 h-6 mt-2"
-                    onClick={() => decrementNote(i)}
-                  >
-                    <ChevronDownIcon />
-                  </Button>
+                  {/* NOTE */}
+                  <div>
+                    <div
+                      key={i + 1}
+                      onClick={() => handleMuteUnmute(i)}
+                      className={`h-14 w-14 rounded-xl border cursor-pointer ${
+                        i + 1 === count ? "bg-white" : ""
+                      } ${i + 1 === count ? "text-black" : "text-white"}`}
+                    >
+                      <p className="text-center justify-center flex flex-col h-full w-full">
+                        {note[1].includes(".") ? " - " : note[1]}
+                      </p>
+                    </div>
+                  </div>
+                  {/* DECREMENT NOTE */}
+                  <div>
+                    <Button
+                      variant={"outline"}
+                      className="p-1 h-6 mt-2"
+                      onClick={() => decrementNote(i)}
+                    >
+                      <ChevronDownIcon />
+                    </Button>
+                  </div>
                 </div>
               </VolumeContextMenu>
             ))}
@@ -265,54 +274,6 @@ export default function MetronomePage() {
       </Card>
       <Card className="mt-4 w-full">
         <CardFooter className="flex flex-row content-center justify-center p-5">
-          <div className="m-auto">
-            <Button
-              variant={"outline"}
-              className="h-14 w-14"
-              onClick={() => router.push("/")}
-            >
-              <ArrowLeftIcon />
-            </Button>
-          </div>
-          <div className="m-auto flex-row">
-            <Label className="text-sm">Time Signature</Label>
-            <Select
-              onValueChange={handleTimeSignatureChange}
-              value={timeSignature}
-            >
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="Time Signature" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  {metronome ? (
-                    metronome.timeSignatures.map((timeSignature) => (
-                      <SelectItem
-                        key={timeSignature}
-                        value={timeSignature}
-                        className="text-sm"
-                      >
-                        {timeSignature}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <SelectItem value="4/4">4/4</SelectItem>
-                  )}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="m-auto">
-            <Label className="text-sm">Beats Per Minute</Label>
-            <Input
-              className="w-[150px]"
-              type="number"
-              placeholder="BPM"
-              value={bpm}
-              onChange={handleBpmChange}
-            />
-          </div>
           <div className="m-auto">
             <PlayPaushBtn
               playing={playing}
@@ -346,50 +307,14 @@ function PlayPaushBtn({
   return (
     <>
       {playing ? (
-        <Button onClick={stop} className="h-14 w-14">
-          <StopIcon />
+        <Button onClick={stop} variant="ghost" className="h-14 w-14">
+          <StopIcon className="size-8" />
         </Button>
       ) : (
-        <Button onClick={play} className="h-14 w-14">
-          <PlayIcon />
+        <Button onClick={play} variant="ghost" className="h-14 w-14">
+          <PlayIcon className="size-8" />
         </Button>
       )}
     </>
-  );
-}
-
-import { cn } from "@/lib/utils";
-import { Slider } from "@/components/ui/slider";
-
-export function VolumeContextMenu({
-  children,
-  index,
-  note,
-  updateNote,
-}: {
-  children: React.ReactNode;
-  index: number;
-  note: Note;
-  updateNote: (i: number, volume: number, newNote: string) => void;
-}) {
-  const handleVolumeChange = (volume: number) => {
-    console.log("Volume: ", volume);
-    updateNote(index, volume, note[1]);
-  };
-
-  return (
-    <ContextMenu>
-      <ContextMenuTrigger>{children}</ContextMenuTrigger>
-      <ContextMenuContent className="w-full content-center p-4">
-        <Slider
-          max={10}
-          step={0.1}
-          className={cn("w-[60]")}
-          value={[note[0]]}
-          onValueChange={(e) => handleVolumeChange(e[0])}
-        />
-        <p className="text-sm text-center pt-2">{note[0]}</p>
-      </ContextMenuContent>
-    </ContextMenu>
   );
 }

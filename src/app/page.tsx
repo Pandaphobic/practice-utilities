@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import MetronomeIcon from "@/components/icons/metronome";
+import MetronomeIcon from "@/components/icons/metronome-icon";
 import { useRouter } from "next/navigation";
 
 export default function Home() {
