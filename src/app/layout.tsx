@@ -5,7 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Inter as FontSans } from "next/font/google";
 import { cn } from "@/lib/utils";
 
-export const fontSans = FontSans({
+const fontSans = FontSans({
   subsets: ["latin"],
   variable: "--font-sans",
 });
@@ -25,7 +25,7 @@ export default function RootLayout({
       <body
         className={cn(
           "min-h-screen bg-background antialiased font-sans flex flex-col justify-center items-center",
-          fontSans.variable
+          fontSans.className
         )}
       >
         <ThemeProvider
